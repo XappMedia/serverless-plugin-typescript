@@ -70,7 +70,13 @@ class ServerlessPlugin {
     // Fake service path so that serverless will know what to zip
     this.serverless.config.servicePath = path.join(this.originalServicePath, buildFolder)
 
-    const tsFileNames = typescript.extractFileNames(this.originalFunctions)
+    const tsFileNames = typescript.extractFileNames(this.originalFunctions).map((func: string) => {
+        // the handler syntax can be "currentFolder/subfolder/subfolder/subfolder/.../filename.ts" so we need to remove the first instance of "currentFolder".
+        // This assumes that the serverless.yml is in the root directory of the service.
+        const firstInstanceOfSlash = func.indexOf('/');
+        const subFunc = func.substr(firstInstanceOfSlash);
+        return this.originalServicePath + subFunc;
+    });
     const tsconfig = typescript.getTypescriptConfig(this.originalServicePath)
 
     for (const fnName in this.originalFunctions) {
